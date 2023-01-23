@@ -16,7 +16,7 @@ genre_id INTEGER REFERENCES genre(id)
 
 CREATE TABLE IF NOT EXISTS albums (
 id SERIAL PRIMARY KEY,
-album_title TEXT NOT NULL,
+album_title TEXT NOT NULL UNIQUE,
 album_year INTEGER NOT NULL
 );
 
@@ -29,7 +29,7 @@ performer_id INTEGER REFERENCES performer(id)
 CREATE TABLE IF NOT EXISTS tracks (
 id SERIAL PRIMARY KEY,
 track_name VARCHAR(35) NOT NULL, 
-track_time INTEGER NOT NULL,
+track_time DECIMAL(3.2) NOT NULL,
 albums_id INTEGER REFERENCES albums(id)
 );
 
