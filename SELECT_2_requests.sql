@@ -41,7 +41,7 @@ WHERE
 -- СРЕДНЯЯ ПРОДОЛЖИТЕЛЬНОСТЬ ТРЕКОВ ПО КАЖДОМУ АЛЬБОМУ --
 SELECT
 	a.album_title,
-	sum(t.track_time)/count(t.track_time) 
+	avg(t.track_time) 
 FROM
 	albums a
 LEFT JOIN tracks t ON
@@ -53,17 +53,25 @@ ORDER BY
 
 -- ЗАПРОС 4 --
 -- ВСЕ ИСПОЛНИТЕЛИ, КОТОРЫЕ НЕ ВЫПУСТИЛИ АЛЬБОМЫ В 2020 ГОДУ --
-
 SELECT
 	DISTINCT p.named
 FROM
-	performer p 
-LEFT JOIN album_performer ap ON
-	p.id = ap.performer_id
-LEFT JOIN albums a ON
-	a.id = ap.performer_id
-WHERE 
-	a.album_year != 2022;
+	performer p
+WHERE
+	p.named NOT IN (
+	SELECT
+		DISTINCT p.named
+	FROM
+		performer p
+	LEFT JOIN album_performer ap ON
+		p.id = ap.performer_id 
+	LEFT JOIN albums a ON
+		a.id = ap.albums_id 
+	WHERE
+		a.album_year = 2010
+)
+ORDER BY
+	p.named 
 
 -- ЗАПРОС 5 --
 -- НАЗВАНИЯ СБОРНИКОВ, В КОТОРЫХ ПРИСУТСТВУЕТ КОНКРЕТНЫЙ ИСПОЛНИТЕЛЬ --
@@ -86,9 +94,9 @@ WHERE p.named LIKE '%%Foo %%';
 
 -- ЗАПРОС 6 --
 -- НАЗВАНИЕ АЛЬБОМОВ, В КОТОРЫХ ПРИСУТСТВУЮТ ИСПОЛНИТЕЛИ БОЛЕЕ 1 ЖАНРА --
-????????????????????????????????
+
 SELECT
-	a.album_title,
+	a.album_title
 FROM
 	albums a
 LEFT JOIN album_performer ap ON
@@ -101,7 +109,7 @@ LEFT JOIN genre g ON
 	g.id = pg.genre_id
 GROUP BY
 	a.album_title  
-HAVING ?????????????????????????;
+HAVING count(DISTINCT g.title)>1;
 
 -- ЗАПРОС 7 --
 -- НАИМЕНОВАНИЕ ТРЕКОВ, КОТОРЫЕ НЕ ВХОДЯТ В СБОРНИКИ --
@@ -121,7 +129,7 @@ WHERE
 -- (ТЕОРЕТИЧЕСКИ ТАКИХ ТРЕКОВ МОЖЕТ БЫТЬ НЕСКОЛЬКО)--
 
 SELECT
-	min(track_time)
+	p.named  
 FROM
 	tracks t
 LEFT JOIN albums a ON
@@ -129,18 +137,35 @@ LEFT JOIN albums a ON
 LEFT JOIN album_performer ap ON
 	ap.albums_id = a.id
 LEFT JOIN performer p ON
-	p.id = ap.performer_id;
+	p.id = ap.performer_id
+WHERE
+	t.track_time = (
+SELECT
+	min(track_time)
+FROM
+	tracks t);
 
 -- ЗАПРОС 9 --
 -- НАЗВАНИЕ АЛЬБОМОВ, СОДЕРЖАЩИХ НАИМЕНЬШЕЕ КОЛИЧЕСТВО ТРЕКОВ --
-??????????????????????????????????
+
 SELECT
-	a.album_title,
-	count(a.album_title) 
+	a.album_title
 FROM
 	albums a
 LEFT JOIN tracks t ON
 	t.albums_id = a.id
 GROUP BY
 	a.album_title
-??????????????????????????????????;
+HAVING
+	count(*) = 
+				(
+	SELECT
+		count(*)
+	FROM
+		albums a
+	LEFT JOIN tracks t ON t.albums_id = a.id
+	GROUP BY
+		a.album_title
+	ORDER BY
+		count(*)
+	LIMIT 1);
